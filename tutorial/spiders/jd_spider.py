@@ -1,6 +1,8 @@
 #-*- encoding: UTF-8 -*-
 #---------------------------------import------------------------------------
 import scrapy
+import re
+from tutorial.items import TutorialItem
 from scrapy import Request
 #---------------------------------------------------------------------------
 class JdSpider(scrapy.Spider):
@@ -19,7 +21,7 @@ class JdSpider(scrapy.Spider):
             for i in href:
                 if 'category' in i:
                     url = "http://wap.jd.com" + i
-                    print url
+                    # print url
                     r = Request(url, callback=self.parse_category)
                     req.append(r)
         return req
@@ -31,7 +33,7 @@ class JdSpider(scrapy.Spider):
             href = sel.xpath('@href').extract()
             for i in href:
                 url = "http://wap.jd.com" + i
-                print url
+                # print url
                 r = Request(url, callback=self.parse_list)
                 req.append(r)
         return req
@@ -52,23 +54,39 @@ class JdSpider(scrapy.Spider):
             href = sel.xpath('@href').extract()
             for i in href:
                 url = "http://wap.jd.com" + i
-                print url
+                # print url
                 r = Request(url, callback=self.parse_product)
                 req.append(r)
         return req
 
     def parse_product(self,response):
-        req = []
+        '商品页获取title,price,product_id'
         url = re.sub('product','comments',response.url)
         r = Request(url,callback=self.parse_comments)
-        req.append(r)
 
-        title = response.xpath('//title/text()').extract()[0][:-6]
-        price = response.xpath('/html/body/div[4]/div[4]/font/text()').extract()[0]
-        print title,price
-        print "sucess!"
-        return req
+        title = response.xpath('//title/text()').extract()[0][:-7]
+        price = response.xpath('/html/body/div[4]/div[4]/font/text()').extract()[0][1:]
+        product_id = response.url.split('/')[-1][:-5]
 
 
+        item = TutorialItem()
+        item['title'] = title
+        item['price'] = price
+        item['product_id'] = product_id
+        r.meta['item'] = item
+        print title,price,product_id
+        return r
 
+    def parse_comments(self,response):
+        '获取商品comment'
+        comment_5 = response.xpath('/html/body/div[4]/div[2]/a[1]/font[2]/text()').extract()
+        comment_3 = response.xpath('/html/body/div[4]/div[2]/a[2]/font/text()').extract()
+        comment_1 = response.xpath('/html/body/div[4]/div[2]/a[3]/font/text()').extract()
+        comment = comment_5 + comment_3 + comment_1
+        print comment
+        totle_comment = sum([int(i.strip()) for i in comment])
+        item = response.meta['item']
+        item['comment'] = totle_comment
+        print totle_comment
+        return item
 ############################################################################
