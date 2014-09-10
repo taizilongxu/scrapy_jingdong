@@ -16,12 +16,9 @@ class JdSpider(scrapy.Spider):
         '获取全部分类商品'
         req = []
         for sel in response.xpath('/html/body/div[5]/div[2]/a'):
-            name = sel.xpath('text()').extract()
-            href = sel.xpath('@href').extract()
-            for i in href:
+            for i in sel.xpath('@href').extract():
                 if 'category' in i:
                     url = "http://wap.jd.com" + i
-                    # print url
                     r = Request(url, callback=self.parse_category)
                     req.append(r)
         return req
@@ -30,10 +27,8 @@ class JdSpider(scrapy.Spider):
         '获取分类页'
         req = []
         for sel in response.xpath('/html/body/div[5]/div/a'):
-            href = sel.xpath('@href').extract()
-            for i in href:
+            for i in sel.xpath('@href').extract():
                 url = "http://wap.jd.com" + i
-                # print url
                 r = Request(url, callback=self.parse_list)
                 req.append(r)
         return req
@@ -51,8 +46,7 @@ class JdSpider(scrapy.Spider):
 
         '商品地址'
         for sel in response.xpath('/html/body/div[contains(@class, "pmc")]/div[1]/a'):
-            href = sel.xpath('@href').extract()
-            for i in href:
+            for i in sel.xpath('@href').extract():
                 url = "http://wap.jd.com" + i
                 r = Request(url, callback=self.parse_product)
                 req.append(r)
@@ -60,9 +54,6 @@ class JdSpider(scrapy.Spider):
 
     def parse_product(self,response):
         '商品页获取title,price,product_id'
-        url = re.sub('product','comments',response.url)
-        r = Request(url,callback=self.parse_comments)
-
         title = response.xpath('//title/text()').extract()[0][:-7]
         price = response.xpath('/html/body/div[4]/div[4]/font/text()').extract()[0][1:]
         product_id = response.url.split('/')[-1][:-5]
@@ -72,7 +63,8 @@ class JdSpider(scrapy.Spider):
         item['price'] = price
         item['product_id'] = product_id
         r.meta['item'] = item
-        print title,price,product_id
+
+        r = Request(re.sub('product','comments',response.url),callback=self.parse_comments) # 评论页地址
         return r
 
     def parse_comments(self,response):
