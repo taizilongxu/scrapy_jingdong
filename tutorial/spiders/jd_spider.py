@@ -54,7 +54,6 @@ class JdSpider(scrapy.Spider):
             href = sel.xpath('@href').extract()
             for i in href:
                 url = "http://wap.jd.com" + i
-                # print url
                 r = Request(url, callback=self.parse_product)
                 req.append(r)
         return req
@@ -68,7 +67,6 @@ class JdSpider(scrapy.Spider):
         price = response.xpath('/html/body/div[4]/div[4]/font/text()').extract()[0][1:]
         product_id = response.url.split('/')[-1][:-5]
 
-
         item = TutorialItem()
         item['title'] = title
         item['price'] = price
@@ -78,15 +76,13 @@ class JdSpider(scrapy.Spider):
         return r
 
     def parse_comments(self,response):
-        '获取商品comment'
+        '获取商品comment数'
         comment_5 = response.xpath('/html/body/div[4]/div[2]/a[1]/font[2]/text()').extract()
         comment_3 = response.xpath('/html/body/div[4]/div[2]/a[2]/font/text()').extract()
         comment_1 = response.xpath('/html/body/div[4]/div[2]/a[3]/font/text()').extract()
         comment = comment_5 + comment_3 + comment_1
-        print comment
         totle_comment = sum([int(i.strip()) for i in comment])
         item = response.meta['item']
         item['comment'] = totle_comment
-        print totle_comment
         return item
 ############################################################################
